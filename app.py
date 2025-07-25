@@ -114,14 +114,16 @@ def main():
         try:
             response = requests.get(image_url)
             response.raise_for_status()
-            img = Image.open(BytesIO(response.content))
-            st.image(img, caption="Fetched Image from URL", use_container_width=True)
+            # img = Image.open(BytesIO(response.content))
+            img = Image.open(BytesIO(response.content)).convert("RGB")
+            st.image(img, caption="Fetched Image from URL")
         except Exception as e:
             st.error("Failed to fetch the image from the provided URL. Please check the URL.")
             img = None
     elif uploaded_file is not None:
-        img = Image.open(uploaded_file)
-        st.image(uploaded_file, caption="Uploaded Image", use_container_width=True)
+        # img = Image.open(uploaded_file)
+        img = Image.open(uploaded_file).convert("RGB")
+        st.image(uploaded_file, caption="Uploaded Image")
     else:
         img = None
 
@@ -130,13 +132,22 @@ def main():
             start_time = time.time()
 
             # Load the image and preprocess it
-            img_resized = image.img_to_array(img)
-            img = image.smart_resize(img_resized, (75, 100))  # Maintain current logic
-            img_array = image.img_to_array(img)
-            img_array = np.expand_dims(img_array, axis=0)
+            # img_resized = image.img_to_array(img)
+            # img = image.smart_resize(img_resized, (75, 100))  # Maintain current logic
+            # img_array = image.img_to_array(img)
+            # img_array = np.expand_dims(img_array, axis=0)
 
-            # Normalize the image as per the training data preprocessing
-            img_array = (img_array - np.mean(img_array)) / np.std(img_array)
+            # # Normalize the image as per the training data preprocessing
+            # img_array = (img_array - np.mean(img_array)) / np.std(img_array)
+
+            # Load the image and preprocess it
+            img = img.convert("RGB")  # Ensure 3 channels
+            img = image.smart_resize(image.img_to_array(img), (75, 100))  # (75, 100, 3)
+            img_array = np.expand_dims(img, axis=0).astype("float32")
+
+            # Normalize
+            img_array = (img_array - np.mean(img_array)) / (np.std(img_array) + 1e-7)
+
 
             predictions = model.predict(img_array)
             predicted_class = np.argmax(predictions, axis=1)
